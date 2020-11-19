@@ -1,11 +1,56 @@
-function midiToFreq(m) {
-    return Math.pow(2, (m - 69) / 12) * 440;
-}
-
 class ReadLine {
     constructor(line){
-        this.arr = line.split(" ");
+        //this.arr = line.split(" ");
+        this.key = "";
+        this.arr = this.scan(line.split(""));
         this.setValues();
+    }
+
+    scan(l){
+        var temp = [];
+        var arr = [];
+
+        while (l.length > 0){
+            var c = l.shift();
+            if (c === "="){
+                if (temp.length > 0){
+                    this.key = temp.join("");
+                    temp = []
+                }
+                else{
+                    this.key = arr[arr.length-1];
+                    arr.pop();
+                }
+            }
+            else if (c === "*"){
+                if (temp.length > 0){
+                    temp.push(c);
+                    arr.push(temp.join(""));
+                    temp = [];
+                }
+                else{
+                    arr[arr.length -1] = arr[arr.length -1].concat(c);
+                }
+            }
+            else if (c === " "){
+                if (temp.length > 0){
+                    arr.push(temp.join(""));
+                    temp = [];
+                }
+            }
+            else if (c === "(" || c === ")"){
+                if (temp.length > 0){
+                    arr.push(temp.join(""));
+                    temp = [];
+                }
+                arr.push(c);
+            }
+            else{
+                temp.push(c);
+            }
+        }
+        arr.push(temp.join(""));
+        return arr;
     }
 
     setValues(){
@@ -34,9 +79,15 @@ class ReadLine {
                 } else {
                     var n = parseInt(curr);
                     if (isNaN(n) || n < 0 || n > 127) {
-                        schedule.push([null, 1])
+                        if (curr === "x"){
+                            schedule.push([genNotes(schedule), 1]);
+                            console.log("sched "+schedule);
+                        }
+                        else{
+                            schedule.push([null, 1]);
+                        }
                     } else {
-                        schedule.push([midiToFreq(n), 1])
+                        schedule.push([n, 1]);
                     }
                     beats += 1;
                 }
@@ -93,7 +144,6 @@ class ReadLine {
                 notes[i][1] *= mult;
             }
         }
-
         return [notes, beats, arr]
     }
 
@@ -115,6 +165,7 @@ class ReadLine {
                 index = gr.length;
             }
         }
+
         var notes = [];
         var beats;
         if (arr.length === 0 && curr !== ")"){
@@ -142,3 +193,46 @@ class ReadLine {
         return [notes, beats, arr];
     }
 }
+
+music_rnn = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
+music_rnn.initialize();
+
+function genNotes(notes) {
+
+    var fnotes = format(notes);
+    //the RNN model expects quantized sequences
+    const qns = mm.sequences.quantizeNoteSequence(fnotes, 4);
+
+    //and has some parameters we can tune
+    rnn_steps = 40; //including the input sequence length, how many more quantized steps (this is diff than how many notes) to generate
+    rnn_temperature = 1.1; //the higher the temperature, the more random (and less like the input) your sequence will be
+
+    // we continue the sequence, which will take some time (thus is run async)
+    // "then" when the async continueSequence is done, we play the notes
+    music_rnn
+        .continueSequence(qns, rnn_steps, rnn_temperature)
+        .then((sample) => {
+            console.log("done")
+            var result = mm.sequences.unquantizeSequence(sample);
+            console.log(result.notes[notes.length-1].pitch);
+            notes[notes.length-1][0] = result.notes[notes.length-1].pitch;
+            console.log("CHANGE "+notes)
+            return result.notes[notes.length-1].pitch;
+        })
+
+}
+
+function format(n) {
+    var steps = [];
+    var st = 0.0;
+    var end = 0.0;
+    for (let i = 0; i < n.length; i++){
+        end = st + 1/n[i][1];
+        steps.push({pitch: n[i][0], startTime: st, endTime: end});
+        st = end;
+    }
+    var fnotes = {notes: steps, totalTime: end};
+    console.log(fnotes);
+    return fnotes;
+}
+
