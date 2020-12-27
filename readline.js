@@ -1,3 +1,6 @@
+music_rnn = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
+music_rnn.initialize();
+
 class ReadLine {
     constructor(line){
         //this.arr = line.split(" ");
@@ -55,11 +58,17 @@ class ReadLine {
 
     setValues(){
         var result = this.noteSchedule(this.arr);
+        //this.gen = false;
+        console.log("set values result")
+        console.log(result)
         this.notes = result[0];
-        this.generate();
+        this.generate(result);
         // a 'note' is a length 2 array, note[0] is freq, note[1] is denominator of the fraction of the beat
         // [440, 2] means the note is 440 hz and lasts half a beat
         this.beats = result[1];
+        //if (this.gen == true){
+            //genNotes(this.notes);
+        //}
     }
 
     noteSchedule(arr){
@@ -82,7 +91,7 @@ class ReadLine {
                     if (isNaN(n) || n < 0 || n > 127) {
                         if (curr === "x"){
                             schedule.push(["x", 1]);
-                            console.log("sched "+schedule);
+                            this.gen = true;
                         }
                         else{
                             schedule.push([null, 1]);
@@ -202,48 +211,41 @@ class ReadLine {
             if (this.notes[i][0]==="x"){
                 var sliced = this.notes.slice(0,i);
                 //console.log("giving genNotes "+sliced)
-                this.notes[i][0] = genNotes(sliced);
+                this.genNotes(sliced);
             }
         }
         console.log("done");
         console.log(this.notes);
     }
 
-}
+    genNotes(notes) {
 
+        var fnotes = format(notes);
+        //the RNN model expects quantized sequences
+        const qns = mm.sequences.quantizeNoteSequence(fnotes, 1);
 
-//  WHAT IM GONNA DO NEXT
-// HAVE THE GENERATING HAPPEN INSIDE THE GENNOTES FUNCTION, AND THEN PUT A RECURSIVE CALL IN THE .then THING
-// SO THAT THIS SHIT ACTUALLY WORKS FOR MULTIPLE x'S AND THEN MIGHT ACTUALLY WORK IN GENERAL
+        //and has some parameters we can tune
+        var rnn_steps = notes.length + 1; //including the input sequence length, how many more quantized steps (this is diff than how many notes) to generate
+        var rnn_temperature = 1.1; //the higher the temperature, the more random (and less like the input) your sequence will be
 
-music_rnn = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
-music_rnn.initialize();
-
-function genNotes(notes) {
-
-    var fnotes = format(notes);
-    //the RNN model expects quantized sequences
-    const qns = mm.sequences.quantizeNoteSequence(fnotes, 1);
-
-    //and has some parameters we can tune
-    rnn_steps = notes.length + 1; //including the input sequence length, how many more quantized steps (this is diff than how many notes) to generate
-    rnn_temperature = 1.1; //the higher the temperature, the more random (and less like the input) your sequence will be
-
-    // we continue the sequence, which will take some time (thus is run async)
-    // "then" when the async continueSequence is done, we play the notes
-    music_rnn
-        .continueSequence(qns, rnn_steps, rnn_temperature)
-        .then((sample) => {
-            var result = mm.sequences.unquantizeSequence(sample);
-            console.log(result);
-            console.log(result.notes);
-            console.log(result.notes.length);
-            //notes[notes.length][0] = result.notes[notes.length-1].pitch;
-            console.log(result.notes[0].pitch);
-            //return result.notes[notes.length-1].pitch;
-            return result.notes[0].pitch;
-        })
-
+        // we continue the sequence, which will take some time (thus is run async)
+        // "then" when the async continueSequence is done, we play the notes
+        music_rnn
+            .continueSequence(qns, rnn_steps, rnn_temperature)
+            .then((sample) => {
+                var result = mm.sequences.unquantizeSequence(sample);
+                console.log("this.notes")
+                console.log(this.notes)
+                console.log("result ");
+                console.log(result);
+                console.log("Result.notes");
+                console.log(result.notes);
+                this.notes[notes.length][0] = result.notes[0].pitch;
+                console.log(notes);
+                //return result.notes[notes.length-1].pitch;
+                return result.notes[0].pitch;
+            })
+    }
 }
 
 function format(n) {
