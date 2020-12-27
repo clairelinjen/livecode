@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         for (let i = 0; i < notes.length; i++){
             var now = time + elapsed;
             var dur = beat / notes[i][1];
-            if (notes[i][0] != null){
+            if (notes[i][0] != null && notes[i][0] !== "x"){
                 g.gain.setValueAtTime(0,now);
                 loop.osc.frequency.setValueAtTime(midiToFreq(notes[i][0]), now);
                 g.gain.linearRampToValueAtTime(.8, now + dur/9);
