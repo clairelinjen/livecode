@@ -4,7 +4,7 @@ var score = [];     // arr of ReadLine objects
 var loops = {};
 var activeKeys = [];
 var beat = 1.5;
-var beatcount = 0;
+var currentbeats = 0
 
 function midiToFreq(m) {
     return Math.pow(2, (m - 69) / 12) * 440;
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var line = score[i];
             if (activeKeys.includes(line.key)){
                 loops[line.key].notes = line.notes;
-                loops[line.key].beats = line.beats;
+                loops[line.key].newBeats = line.beats;
             }
             else{
                 loops[line.key] = new Loop(line);
@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
     }
 
-    function stopLoop(key, time){
+    function stopLoop(key){
         setTimeout(function(){
             loops[key].osc.stop();
             delete loops[key].osc;
@@ -113,16 +113,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
         while(nextBeat < audioCtx.currentTime + 0.1) {
 
             nextBeat += beat;
-            beatcount += 1;
+            currentbeats += 1;
             for (var key in loops){
                 if (loops[key].start === 0 || nextBeat >= loops[key].start + loops[key].beats * beat){
                     if (loops[key].del === true){
-                        stopLoop(key, nextBeat);
+                        stopLoop(key);
                         loops[key].del = "deleting";
                     }
                     else if (loops[key].del === false){
-                        playLoop(loops[key], nextBeat);
+                        console.log("play loop at "+currentbeats);
+                        console.log("length of loop: "+loops[key].beats);
                         loops[key].beats = loops[key].newBeats;
+                        playLoop(loops[key], nextBeat);
                         loops[key].start = nextBeat;
                     }
                 }
