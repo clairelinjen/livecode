@@ -99,8 +99,13 @@ class ReadLine {
                             schedule.push(["x", 1]);
                         }
                         else{
-                            this.errors.push("\'"+curr+"\' is undefined")
-                            break;
+                            if (curr === "-"){
+                                schedule.push([null, 1]);
+                            }
+                            else{
+                                this.errors.push("\'"+curr+"\' is undefined")
+                                break;
+                            }
                         }
                     } else {
                         schedule.push([n, 1]);
@@ -229,10 +234,6 @@ class ReadLine {
             .continueSequence(qns, rnn_steps, rnn_temperature)
             .then((sample) => {
                 var result = mm.sequences.unquantizeSequence(sample);
-                console.log("beginning notes")
-                console.log(notes)
-                console.log("this.notes")
-                console.log(this.notes)
                 this.notes[notes.length][0] = result.notes[0].pitch;
                 this.generate(notes.length+1)
             })

@@ -76,7 +76,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     }
 
     function change(){
-        console.log("click");
         updateScore();
         var newKeys = [];
         for (let i = 0; i < score.length; i++){
@@ -92,7 +91,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
         for (let i=0; i < activeKeys.length; i++){
             if (!newKeys.includes(activeKeys[i])){
-                console.log("delete "+activeKeys[i]);
                 loops[activeKeys[i]].del = true;
             }
         }
@@ -125,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 g.gain.linearRampToValueAtTime(0, now + dur);
             }
             else{
-                loop.gain.gain.setValueAtTime(0,now + dur);
+                g.gain.setValueAtTime(0,now + dur);
             }
             elapsed += dur;
         }
@@ -148,8 +146,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         while(nextBeat < audioCtx.currentTime + 0.1) {
 
             nextBeat += beat;
-            currentbeats += 1;
-            console.log(currentbeats);
             for (var key in loops){
                 if (loops[key].start === 0 || nextBeat >= loops[key].start + loops[key].beats * beat){
                     if (loops[key].del === true){
@@ -157,8 +153,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
                         loops[key].del = "deleting";
                     }
                     else if (loops[key].del === false){
-                        console.log("play loop at "+currentbeats);
-                        console.log("length of loop: "+loops[key].beats);
                         loops[key].beats = loops[key].newBeats;
                         playLoop(loops[key], nextBeat);
                         loops[key].start = nextBeat;
