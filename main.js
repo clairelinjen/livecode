@@ -1,32 +1,27 @@
 var livecode;       // textarea
-var button;           // button
+var playbutton;
+var stopbutton;
+var errorbox;
 var score = [];     // arr of ReadLine objects
 var loops = {};
 var activeKeys = [];
 var beat = 1.5;
-var currentbeats = 0
+var currentbeats = 0;
+var on = false;
 
 function midiToFreq(m) {
     return Math.pow(2, (m - 69) / 12) * 440;
-}
-
-function updateScore(){
-    score = [];
-    var lines = livecode.value.split("\n");
-    for(let i = 0; i < lines.length; i++){
-        if (lines[i].replace(/\s/g, '').length) {
-            var l = new ReadLine(lines[i]); // in readline.js
-            score.push(l);
-        }
-    }
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     livecode = document.getElementById("livecode");
-    button = document.getElementById("play");
-    button.addEventListener("click", change);
+    playbutton = document.getElementById("play");
+    playbutton.addEventListener("click", change);
+    stopbutton = document.getElementById("stop");
+    stopbutton.addEventListener("click", stopPlaying);
+    errorbox = document.getElementById("er");
 
     var comp = audioCtx.createDynamicsCompressor();
     comp.threshold.setValueAtTime(-50, audioCtx.currentTime);
@@ -51,7 +46,37 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
     }
 
+    function updateScore(){
+        score = [];
+        errorbox.innerHTML = "";
+        var lines = livecode.value.split("\n");
+        var keys = {};
+        for(let i = 0; i < lines.length; i++){
+            if (lines[i].replace(/\s/g, '').length) {
+                var l = new ReadLine(lines[i]); // in readline.js
+                if (l.key === ""){
+                    error(l.errors, i+1);
+                }
+                else if (l.key in keys){
+                    error(["Duplicate key \'"+l.key+"\'",], i+1);
+                }
+                else{
+                    score.push(l);
+                    keys[l.key] = true;
+                }
+            }
+        }
+    }
+
+    function error(arr, l){
+        for (let i=0; i < arr.length; i++){
+            var error = "ERROR: Line "+l+" - "+arr[i]+"<br>";
+            errorbox.innerHTML += error;
+        }
+    }
+
     function change(){
+        console.log("click");
         updateScore();
         var newKeys = [];
         for (let i = 0; i < score.length; i++){
@@ -72,7 +97,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
             }
         }
         activeKeys = newKeys;
+        if (!on){
+            scheduler();
+            on = true;
+        }
+    }
 
+    function stopPlaying(){
+        score = [];
+        for (let i=0; i < activeKeys.length; i++){
+            loops[activeKeys[i]].del = true;
+        }
     }
 
     function playLoop(loop, time){
@@ -99,8 +134,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
     function stopLoop(key){
         setTimeout(function(){
             loops[key].osc.stop();
-            delete loops[key].osc;
-            delete loops[key].gain;
+            //delete loops[key].osc;
+            //delete loops[key].gain;
             delete loops[key]
         }, loops[key].beats * beat * 1000)
 
@@ -114,6 +149,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
             nextBeat += beat;
             currentbeats += 1;
+            console.log(currentbeats);
             for (var key in loops){
                 if (loops[key].start === 0 || nextBeat >= loops[key].start + loops[key].beats * beat){
                     if (loops[key].del === true){
@@ -132,8 +168,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
         timerID = window.setTimeout(scheduler, 30.0);
     };
-    scheduler();
-
 
 });
 

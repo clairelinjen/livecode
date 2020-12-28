@@ -1,16 +1,22 @@
-music_rnn = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
+music_rnn = new mm.MusicRNN("https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/melody_rnn");
 music_rnn.initialize();
+
+
 
 class ReadLine {
     constructor(line){
         this.key = "";
+        this.errors = [];
         this.arr = this.scan(line.split(""));
-        this.setValues();
+        if (this.errors.length === 0){
+            this.setValues();
+        }
     }
 
     scan(l){
         var temp = [];
         var arr = [];
+        var symbols = [];
 
         while (l.length > 0){
             var c = l.shift();
@@ -20,8 +26,7 @@ class ReadLine {
                     temp = []
                 }
                 else{
-                    this.key = arr[arr.length-1];
-                    arr.pop();
+                    this.key = arr.pop();
                 }
             }
             else if (c === "*"){
@@ -52,16 +57,24 @@ class ReadLine {
             }
         }
         arr.push(temp.join(""));
+        if (this.key === ""){
+            this.errors.push("Missing Key")
+        }
         return arr;
     }
 
     setValues(){
         var result = this.noteSchedule(this.arr);
-        this.notes = result[0];
-        this.generate(0);
-        // a 'note' is a length 2 array, note[0] is freq, note[1] is denominator of the fraction of the beat
-        // [440, 2] means the note is 440 hz and lasts half a beat
-        this.beats = result[1];
+        if (this.errors.length > 0){
+            this.key = "";
+        }
+        else{
+            this.notes = result[0];
+            this.generate(0);
+            // a 'note' is a length 2 array, note[0] is freq, note[1] is denominator of the fraction of the beat
+            // [440, 2] means the note is 440 hz and lasts half a beat
+            this.beats = result[1];
+        }
     }
 
     noteSchedule(arr){
@@ -84,10 +97,10 @@ class ReadLine {
                     if (isNaN(n) || n < 0 || n > 127) {
                         if (curr === "x"){
                             schedule.push(["x", 1]);
-                            this.gen = true;
                         }
                         else{
-                            schedule.push([null, 1]);
+                            this.errors.push("\'"+curr+"\' is undefined")
+                            break;
                         }
                     } else {
                         schedule.push([n, 1]);
