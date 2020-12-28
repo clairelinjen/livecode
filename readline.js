@@ -3,7 +3,6 @@ music_rnn.initialize();
 
 class ReadLine {
     constructor(line){
-        //this.arr = line.split(" ");
         this.key = "";
         this.arr = this.scan(line.split(""));
         this.setValues();
@@ -58,17 +57,11 @@ class ReadLine {
 
     setValues(){
         var result = this.noteSchedule(this.arr);
-        //this.gen = false;
-        console.log("set values result")
-        console.log(result)
         this.notes = result[0];
-        this.generate(result);
+        this.generate(0);
         // a 'note' is a length 2 array, note[0] is freq, note[1] is denominator of the fraction of the beat
         // [440, 2] means the note is 440 hz and lasts half a beat
         this.beats = result[1];
-        //if (this.gen == true){
-            //genNotes(this.notes);
-        //}
     }
 
     noteSchedule(arr){
@@ -203,47 +196,32 @@ class ReadLine {
         return [notes, beats, arr];
     }
 
-    generate(){
-        console.log("BEFORE GEN" + this.notes);
-        console.log("generating");
-
-        for (let i=0; i < this.notes.length; i++){
+    generate(start){
+        for (let i=start; i < this.notes.length; i++){
             if (this.notes[i][0]==="x"){
-                var sliced = this.notes.slice(0,i);
-                //console.log("giving genNotes "+sliced)
-                this.genNotes(sliced);
+                this.genNotes(this.notes.slice(0,i));
+                break;
             }
         }
-        console.log("done");
-        console.log(this.notes);
     }
 
     genNotes(notes) {
 
         var fnotes = format(notes);
-        //the RNN model expects quantized sequences
         const qns = mm.sequences.quantizeNoteSequence(fnotes, 1);
+        var rnn_steps = notes.length + 1;
+        var rnn_temperature = 1.1;
 
-        //and has some parameters we can tune
-        var rnn_steps = notes.length + 1; //including the input sequence length, how many more quantized steps (this is diff than how many notes) to generate
-        var rnn_temperature = 1.1; //the higher the temperature, the more random (and less like the input) your sequence will be
-
-        // we continue the sequence, which will take some time (thus is run async)
-        // "then" when the async continueSequence is done, we play the notes
         music_rnn
             .continueSequence(qns, rnn_steps, rnn_temperature)
             .then((sample) => {
                 var result = mm.sequences.unquantizeSequence(sample);
+                console.log("beginning notes")
+                console.log(notes)
                 console.log("this.notes")
                 console.log(this.notes)
-                console.log("result ");
-                console.log(result);
-                console.log("Result.notes");
-                console.log(result.notes);
                 this.notes[notes.length][0] = result.notes[0].pitch;
-                console.log(notes);
-                //return result.notes[notes.length-1].pitch;
-                return result.notes[0].pitch;
+                this.generate(notes.length+1)
             })
     }
 }
@@ -257,7 +235,5 @@ function format(n) {
         steps.push({pitch: n[i][0], startTime: st, endTime: end});
         st = end;
     }
-    var fnotes = {notes: steps, totalTime: end};
-    console.log(fnotes);
-    return fnotes;
+    return {notes: steps, totalTime: end};
 }
