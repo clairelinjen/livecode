@@ -16,7 +16,8 @@ class ReadLine {
     scan(l){
         var temp = [];
         var arr = [];
-        var symbols = [];
+        var symbolcount = 0;
+        var restcount = 0;
 
         while (l.length > 0){
             var c = l.shift();
@@ -28,6 +29,10 @@ class ReadLine {
                 else{
                     this.key = arr.pop();
                 }
+                if (arr.length > 0){
+                    this.errors.push("Key cannot contain spaces");
+                    break;
+                }
             }
             else if (c === "*"){
                 if (temp.length > 0){
@@ -38,6 +43,7 @@ class ReadLine {
                 else{
                     arr[arr.length -1] = arr[arr.length -1].concat(c);
                 }
+                symbolcount += 1;
             }
             else if (c === " "){
                 if (temp.length > 0){
@@ -51,14 +57,24 @@ class ReadLine {
                     temp = [];
                 }
                 arr.push(c);
+                symbolcount += 1;
             }
             else{
                 temp.push(c);
+                if (c === '-'){
+                    restcount += 1;
+                }
+                if(c === 'x'){
+                    if (arr.length - symbolcount - restcount <= 1){
+                        this.errors.push("Number of notes before x must be greater than 1");
+                        break;
+                    }
+                }
             }
         }
         arr.push(temp.join(""));
         if (this.key === ""){
-            this.errors.push("Missing Key")
+            this.errors.push("Missing key")
         }
         return arr;
     }

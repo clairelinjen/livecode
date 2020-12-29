@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         for(let i = 0; i < lines.length; i++){
             if (lines[i].replace(/\s/g, '').length) {
                 var l = new ReadLine(lines[i]); // in readline.js
-                if (l.key === ""){
+                if (l.errors.length>0){
                     error(l.errors, i+1);
                 }
                 else if (l.key in keys){

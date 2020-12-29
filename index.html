@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Final</title>
+    <title>l i v e c o d e</title>
     <script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.0.0"></script>
     <script src="./readline.js"></script>
     <script src="./main.js"></script>
@@ -50,13 +50,13 @@
     <div class="row">
         <div class="col-md-7">
             <div id="in">
-                <textarea name="livecode" id="livecode" cols="100" rows="24"></textarea>
+                <textarea name="livecode" id="livecode" cols="100" rows="23"></textarea>
                 <div>
                     <button id="play">Play/Update</button>
                     <button id="stop">Stop</button>
                 </div>
             </div>
-            <div id="er"> </div>
+            <div id="er" class="mt-2"> </div>
         </div>
 
         <div class="col-md-1"> </div>
@@ -66,14 +66,10 @@
                 <div class="row">
                     <div class="col-md-12 mb-4">Quick Guide:</div>
                 </div>
-                <div class="row">
-                    <div class="col-md-12 mb-4">
-                        Start each loop with a key followed by an equals sign. <br>Ex: "e = 60 62 64"
-                    </div>
-                </div>
+
                 <div class="row mb-4">
                     <div class="col-md-12">
-                        1 beat per note/rest by default
+                        1 beat per note by default.
                     </div>
                 </div>
                 <div class="row mb-2">
@@ -118,18 +114,38 @@
                 </div>
                 <div class="row mb-2">
                     <div class="col-md-3">
-                        [int]*
+                        n *
                     </div>
                     <div class="col-md-9">
-                        repeat note (or notes grouped by parentheses), no change to duration
+                        repeat following note or (...) n times, no change to duration
                     </div>
                 </div>
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        [int]**
+                        n **
                     </div>
                     <div class="col-md-9">
-                        repeat note or notes, fit all repeats into original duration
+                        repeat following note or (...) n times, fit all repeats into original duration
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        Start each loop with a key followed by an equals sign.
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        Key cannot contain spaces.
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        Begin each loop on a new line.
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        Don't worry about extra spaces between notes/symbols.
                     </div>
                 </div>
                 <div class="row mb-2">
